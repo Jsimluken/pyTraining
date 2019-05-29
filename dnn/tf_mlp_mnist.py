@@ -6,6 +6,8 @@
 
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
 
 
 # In[2]:
@@ -31,9 +33,10 @@ optimize = tf.train.AdamOptimizer().minimize(loss)
 
 epochs = 100
 with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
+    tf.global_variables_initializer().run()
     for i in range(epochs):
         batch_xs, batch_ys = mnist.train.next_batch(100)
+        print(batch_xs.shape,batch_ys.shape)
         sess.run(optimize,feed_dict={x:batch_xs,y:batch_ys})
-        print("loss: "+sess.run(loss),feed_dict = {x:batch_xs,y:batch_ys})
+        print(sess.run(loss,feed_dict = {x:batch_xs,y:batch_ys}))
 
