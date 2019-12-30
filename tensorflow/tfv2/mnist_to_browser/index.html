@@ -1,0 +1,80 @@
+<html>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.4.0/dist/tf.min.js"></script>
+        <h1>Tiny mnist!!</h1>
+        <p>Draw the number!!</p>
+        <canvas id="cvs" height="300" width="300"></canvas>
+        <button id="predictBtn">Predict</button>
+        <button id="resetBtn">Reset</button>
+        <script >
+            var imgElm = document.getElementById("mnist1");
+            var cvs = document.getElementById("cvs")
+            var preBtn = document.getElementById("predictBtn")
+            var resBtn = document.getElementById("resetBtn")
+
+            var ctx = cvs.getContext('2d');
+            var drawing = false;
+            before_x = 0
+            before_y = 0
+            var resetCanvas = ()=>{
+                ctx.fillStyle = "rgb(0, 0, 0)";
+                ctx.fillRect(0,0,300,300)
+                ctx.fillStyle = "rgb(255, 255, 255)";
+            }
+            resetCanvas()
+
+            cvs.addEventListener("mouseup",()=>{
+                console.log()
+                drawing = false;
+            })
+
+            cvs.addEventListener("mousedown",(e)=>{
+                drawing = true;
+                var rect = e.target.getBoundingClientRect();
+                before_x = e.clientX - rect.left;
+                before_y = e.clientY - rect.top;
+            })
+
+            cvs.addEventListener("mousemove",(e)=>{
+                if (!drawing){return;}
+                var rect = e.target.getBoundingClientRect();
+                var x = e.clientX - rect.left;
+                var y = e.clientY - rect.top;
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(before_x, before_y);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.closePath();
+                
+                before_x = x;
+                before_y = y;
+            })
+
+            var loadModel = async () =>{
+                model = await tf.loadLayersModel("http://localhost:51130/model/web_model/model.json")
+                model.predict(tf.zeros([1,28,28,1]))
+            }
+            loadModel()
+
+            var predict = async ()=>{
+                var image = tf.browser.fromPixels(cvs);
+                image = tf.image.resizeBilinear(image,[28,28])
+                image = image.sub(127.5).div(128.0)
+                image = image.mean(2)
+                image = tf.expandDims(image,0)
+                image = tf.expandDims(image,3)
+                var res = await model.predict(image)
+                res.print()
+                var label = await tf.argMax(res,1).array()
+                alert(label)
+                return res
+            }
+
+            preBtn.onclick = predict
+            resBtn.onclick = resetCanvas
+
+        </script>
+    </body>
+</html>
